@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VCounter Flasher</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+    #status { margin-top: 20px; font-size: 18px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>VCounter Flasher</h1>
+  <p>Flash your ESP8266 with a single click.</p>
+
+  <button id="connectBtn">Connect & Flash</button>
+  <p id="status"></p>
+
+  <script>
+    const binUrl = "VCOUNTER_MASTER_NO_BOOT_LOGO.ino.bin";
+
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        document.getElementById("status").innerText = "Connected. Preparing to flash...";
+
+        const response = await fetch(binUrl);
+        const firmware = new Uint8Array(await response.arrayBuffer());
+
+        const writer = port.writable.getWriter();
+        await writer.write(firmware);
+
+        writer.releaseLock();
+        await port.close();
+
+        document.getElementById("status").innerText = "Flashing complete! You may reset the device.";
+      } catch (err) {
+        document.getElementById("status").innerText = "Error: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
